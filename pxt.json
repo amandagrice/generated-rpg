@@ -1,5 +1,5 @@
 {
-    "name": "rpg-test",
+    "name": "generated-rpg",
     "dependencies": {
         "device": "*",
         "animation": "*"

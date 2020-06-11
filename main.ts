@@ -5,7 +5,10 @@ enum ActionKind {
     WalkForward,
     WalkBackward,
     WalkRight,
-    WalkLeft
+    WalkLeft,
+    snake,
+    snakeIdle,
+    snakeAttack
 }
 namespace SpriteKind {
     export const Tree = SpriteKind.create()
@@ -31,26 +34,7 @@ namespace myTiles {
 . . . . . . . . . . . . . . . . 
 `
 }
-function SetAnimations () {
-    playerSprite = sprites.create(img`
-. . . . . . f f f f . . . . . . 
-. . . . f f f 2 2 f f f . . . . 
-. . . f f f 2 2 2 2 f f f . . . 
-. . f f f e e e e e e f f f . . 
-. . f f e 2 2 2 2 2 2 e e f . . 
-. . f e 2 f f f f f f 2 e f . . 
-. . f f f f e e e e f f f f . . 
-. f f e f b f 4 4 f b f e f f . 
-. f e e 4 1 f d d f 1 4 e e f . 
-. . f f f f d d d d d e e f . . 
-. f d d d d f 4 4 4 e e f . . . 
-. f b b b b f 2 2 2 2 f 4 e . . 
-. f b b b b f 2 2 2 2 f d 4 . . 
-. . f c c f 4 5 5 4 4 f 4 4 . . 
-. . . f f f f f f f f . . . . . 
-. . . . . f f . . f f . . . . . 
-`, SpriteKind.Player)
-    scene.cameraFollowSprite(playerSprite)
+function SetPlayerAnimations () {
     animIdle = animation.createAnimation(ActionKind.Idle, 300)
     animIdle.addAnimationFrame(img`
 . . . . . . f f f f . . . . . . 
@@ -260,6 +244,178 @@ function SetAnimations () {
 `)
     animation.attachAnimation(playerSprite, animWalkLeft)
 }
+function SetSnakeAnimations () {
+    snakeSprite = sprites.create(img`
+. . . . c c c c c c . . . . . . 
+. . . c 6 7 7 7 7 6 c . . . . . 
+. . c 7 7 7 7 7 7 7 7 c . . . . 
+. c 6 7 7 7 7 7 7 7 7 6 c . . . 
+. c 7 c 6 6 6 6 c 7 7 7 c . . . 
+. f 7 6 f 6 6 f 6 7 7 7 f . . . 
+. f 7 7 7 7 7 7 7 7 7 7 f . . . 
+. . f 7 7 7 7 6 c 7 7 6 f c . . 
+. . . f c c c c 7 7 6 f 7 7 c . 
+. . c 7 2 7 7 7 6 c f 7 7 7 7 c 
+. c 7 7 2 7 7 c f c 6 7 7 6 c c 
+c 1 1 1 1 7 6 f c c 6 6 6 c . . 
+f 1 1 1 1 1 6 6 c 6 6 6 6 f . . 
+f 6 1 1 1 1 1 6 6 6 6 6 c f . . 
+. f 6 1 1 1 1 1 1 6 6 6 f . . . 
+. . c c c c c c c c c f . . . . 
+`, SpriteKind.Enemy)
+    tiles.placeOnRandomTile(snakeSprite, sprites.castle.tileGrass2)
+    animation.setAction(snakeSprite, ActionKind.snakeIdle)
+    snakeSprite.follow(playerSprite, 20)
+    scene.cameraFollowSprite(playerSprite)
+    snakeIdle = animation.createAnimation(ActionKind.snakeIdle, 300)
+    snakeIdle.addAnimationFrame(img`
+. . . . c c c c c c . . . . . . 
+. . . c 6 7 7 7 7 6 c . . . . . 
+. . c 7 7 7 7 7 7 7 7 c . . . . 
+. c 6 7 7 7 7 7 7 7 7 6 c . . . 
+. c 7 c 6 6 6 6 c 7 7 7 c . . . 
+. f 7 6 f 6 6 f 6 7 7 7 f . . . 
+. f 7 7 7 7 7 7 7 7 7 7 f . . . 
+. . f 7 7 7 7 6 c 7 7 6 f c . . 
+. . . f c c c c 7 7 6 f 7 7 c . 
+. . c 7 2 7 7 7 6 c f 7 7 7 7 c 
+. c 7 7 2 7 7 c f c 6 7 7 6 c c 
+c 1 1 1 1 7 6 f c c 6 6 6 c . . 
+f 1 1 1 1 1 6 6 c 6 6 6 6 f . . 
+f 6 1 1 1 1 1 6 6 6 6 6 c f . . 
+. f 6 1 1 1 1 1 1 6 6 6 f . . . 
+. . c c c c c c c c c f . . . . 
+`)
+    snakeIdle.addAnimationFrame(img`
+. . . c c c c c c . . . . . . . 
+. . c 6 7 7 7 7 6 c . . . . . . 
+. c 7 7 7 7 7 7 7 7 c . . . . . 
+c 6 7 7 7 7 7 7 7 7 6 c . . . . 
+c 7 c 6 6 6 6 c 7 7 7 c . . . . 
+f 7 6 f 6 6 f 6 7 7 7 f . . . . 
+f 7 7 7 7 7 7 7 7 7 7 f . . . . 
+. f 7 7 7 7 6 c 7 7 6 f . . . . 
+. . f c c c c 7 7 6 f c c c . . 
+. . c 6 2 7 7 7 f c c 7 7 7 c . 
+. c 6 7 7 2 7 7 c f 6 7 7 7 7 c 
+. c 1 1 1 1 7 6 6 c 6 6 6 c c c 
+. c 1 1 1 1 1 6 6 6 6 6 6 c . . 
+. c 6 1 1 1 1 1 6 6 6 6 6 c . . 
+. . c 6 1 1 1 1 1 7 6 6 c c . . 
+. . . c c c c c c c c c c . . . 
+`)
+    animation.attachAnimation(snakeSprite, snakeIdle)
+    snakeAttack = animation.createAnimation(ActionKind.snakeAttack, 300)
+    snakeAttack.addAnimationFrame(img`
+. . . . . c c c c c c c . . . . 
+. . . . c 6 7 7 7 7 7 6 c . . . 
+. . . c 7 c 6 6 6 6 c 7 6 c . . 
+. . c 6 7 6 f 6 6 f 6 7 7 c . . 
+. . c 7 7 7 7 7 7 7 7 7 7 c . . 
+. . f 7 8 1 f f 1 6 7 7 7 f . . 
+. . f 6 f 1 f f 1 f 7 7 7 f . . 
+. . . f f 2 2 2 2 f 7 7 6 f . . 
+. . c c f 2 2 2 2 7 7 6 f c . . 
+. c 7 7 7 7 7 7 7 7 c c 7 7 c . 
+c 7 1 1 1 7 7 7 7 f c 6 7 7 7 c 
+f 1 1 1 1 1 7 6 f c c 6 6 6 c c 
+f 1 1 1 1 1 1 6 6 c 6 6 6 c . . 
+f 6 1 1 1 1 1 6 6 6 6 6 6 c . . 
+. f 6 1 1 1 1 1 6 6 6 6 c . . . 
+. . f f c c c c c c c c . . . . 
+`)
+    snakeAttack.addAnimationFrame(img`
+. . . . . . c c c c c c c . . . 
+. . . . . c f f 6 6 f f 7 c . . 
+. . . . c 7 6 6 6 6 6 6 7 6 c . 
+. . . c 7 7 7 7 7 7 7 7 7 7 c . 
+. . . c 7 8 1 f f 1 6 7 7 7 c . 
+. . . f 6 f 1 f f 1 f 7 7 7 f . 
+. . . f 6 f 2 2 2 2 f 7 7 7 f . 
+. . c c 6 f 2 2 2 2 f 7 7 6 f . 
+. c 7 7 7 7 2 2 2 2 7 7 f c . . 
+c 7 1 1 1 7 7 7 7 7 c c 7 7 c . 
+f 1 1 1 1 1 7 7 7 f c 6 7 7 7 c 
+f 1 1 1 1 1 1 6 f c c 6 6 6 c c 
+f 6 1 1 1 1 1 6 6 c 6 6 6 c . . 
+f 6 1 1 1 1 1 6 6 6 6 6 6 c . . 
+. f 6 1 1 1 1 6 6 6 6 6 c . . . 
+. . f f c c c c c c c c . . . . 
+`)
+    snakeAttack.addAnimationFrame(img`
+. . . . . . c c c c c c c . . . 
+. . . . . c f f 6 6 f f 7 c . . 
+. . . . c 7 6 6 6 6 6 6 7 6 c . 
+. . . c 7 7 7 7 7 7 7 7 7 7 c . 
+. . . c 7 8 1 f f 1 6 7 7 7 c . 
+. . . f 6 f 1 f f 1 f 7 7 7 f . 
+. . . f 6 f 2 2 2 2 f 7 7 7 f . 
+. . c c 6 f 2 2 2 2 f 7 7 6 f . 
+. c 7 7 7 7 2 2 2 2 7 7 f c . . 
+c 7 1 1 1 7 7 7 7 7 c c 7 7 c . 
+f 1 1 1 1 1 7 7 7 f c 6 7 7 7 c 
+f 1 1 1 1 1 1 6 f c c 6 6 6 c c 
+f 6 1 1 1 1 1 6 6 c 6 6 6 c . . 
+f 6 1 1 1 1 1 6 6 6 6 6 6 c . . 
+. f 6 1 1 1 1 6 6 6 6 6 c . . . 
+. . f f c c c c c c c c . . . . 
+`)
+    snakeAttack.addAnimationFrame(img`
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . . . . . . 
+. . . . . . . . . . . c c c c c 
+. . . . . . . . . c c 7 7 7 6 c 
+. . . . . . . . c c 7 7 7 c c . 
+. . . . . . . . c 6 7 7 c . . . 
+. . . . . . . . c 6 6 6 c . . . 
+. . . c c c c c c 6 6 6 c c . . 
+. . c 6 7 7 7 7 6 c c 6 6 6 c . 
+. c 7 7 7 7 7 7 7 7 c 6 6 6 c c 
+c 6 7 7 7 7 7 7 7 7 6 c 6 6 6 c 
+c 7 c 6 6 6 6 c 7 7 7 c 6 6 6 c 
+f 7 c c 6 6 c c 7 7 7 f 6 6 6 c 
+f 7 6 f 6 6 f 6 7 7 7 f 6 6 6 c 
+. c 1 c f f 1 c 7 6 f 6 6 c c . 
+. c c c c c c c c c c c c . . . 
+`)
+    snakeAttack.addAnimationFrame(img`
+. . . . . . . . . . . c c c c c 
+. . . . . . . . . c c 7 7 7 6 c 
+. . . . . . . . c c 7 7 7 c c . 
+. . . . . . . . c 6 7 7 c . . . 
+. . . . . . . . c 6 6 6 c . . . 
+. . . . . . . . c 6 6 6 c c . . 
+. . . c c c c c c c 6 6 6 c c . 
+. . c 6 7 7 7 7 6 c c 6 6 6 c . 
+. c 7 7 7 7 7 7 7 7 c 6 6 6 c c 
+c 6 7 7 7 7 7 7 7 7 6 c 6 6 6 c 
+c 7 c 6 6 6 6 c 7 7 7 c 6 6 6 c 
+f 7 c c 6 6 c c 7 7 7 f 6 6 6 c 
+f 7 6 f 6 6 f 6 7 7 7 f 6 6 6 c 
+. f 7 7 7 7 7 7 7 7 6 f 6 6 c . 
+. c 1 c f f 1 c 7 6 f 6 6 c c . 
+. c c c c c c c c c c c c . . . 
+`)
+    snakeAttack.addAnimationFrame(img`
+. . . . . . . . . . . c c c c c 
+. . . . . . . . . c c 7 7 7 6 c 
+. . . . . . . . c c 7 7 7 c c . 
+. . . . . . . . c 6 7 7 c . . . 
+. . . . . . . . c 6 6 6 c . . . 
+. . . . . . . . c 6 6 6 c c . . 
+. . . c c c c c c c 6 6 6 c c . 
+. . c 6 7 7 7 7 6 c c 6 6 6 c . 
+. c 7 7 7 7 7 7 7 7 c 6 6 6 c c 
+c 6 7 7 7 7 7 7 7 7 6 c 6 6 6 c 
+c 7 c 6 6 6 6 c 7 7 7 c 6 6 6 c 
+f 7 c c 6 6 c c 7 7 7 f 6 6 6 c 
+f 7 6 f 6 6 f 6 7 7 7 f 6 6 6 c 
+. f 7 7 7 7 7 7 7 7 6 f 6 6 c . 
+. c 1 c f f 1 c 7 6 f 6 6 c c . 
+. c c c c c c c c c c c c . . . 
+`)
+    animation.attachAnimation(snakeSprite, snakeAttack)
+}
 function TriggerPlayerAnimations () {
     if (playerSprite.vx > 0) {
         animation.setAction(playerSprite, ActionKind.WalkRight)
@@ -273,6 +429,9 @@ function TriggerPlayerAnimations () {
         animation.setAction(playerSprite, ActionKind.Idle)
     }
 }
+let snakeAttack: animation.Animation = null
+let snakeIdle: animation.Animation = null
+let snakeSprite: Sprite = null
 let animWalkLeft: animation.Animation = null
 let animWalkRight: animation.Animation = null
 let animWalkBackward: animation.Animation = null
@@ -281,7 +440,7 @@ let animIdle: animation.Animation = null
 let treeSprite: Sprite = null
 let playerSprite: Sprite = null
 tiles.setTilemap(tiles.createTilemap(
-            hex`100010000e10101010101010101010101010100f0d09090909090909090909090909090d0d09090909090901090909090909090d0d09010909090909090909090909090d0d09090909090909090909090909090d0d09090909090909090909010909090d0d09090909090909090909090909090d0d09090909090909090909090909090d0d09090909090909090909090909090d0d09090909090109090909090901090d0d09090909090909090909090909090d0d09090909090909090909090909090d0d09090109090909090901090909090d0d09090909090909090909090909090d0d09090909090909090909090909090d0a0c0c0c0c0c0c0c0c0c0c0c0c0c0c0b`,
+            hex`100010000e10101010101010101010101010100f0d09090909090909090909090909090d0d09090909090901090909090909090d0d09010909090909090909090909090d0d09090909090909090909090909090d0d09090909090909090909010909090d0d09090909090909090909090909090d0d09090909090909090909090909090d0d09090909090909090909090909090d0d09090909090109090909090901090d0d09090909090909151515090909090d0d09090909090909091515090909090d0d09090109090909091501090909090d0d09090909090909090915090909090d0d09090909090909090909090909090d0a0c0c0c0c0c0c0c0c0c0c0c0c0c0c0b`,
             img`
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
 2 . . . . . . . . . . . . . . 2 
@@ -300,11 +459,30 @@ tiles.setTilemap(tiles.createTilemap(
 2 . . . . . . . . . . . . . . 2 
 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 
 `,
-            [myTiles.tile0,sprites.castle.tileGrass3,sprites.builtin.forestTiles0,sprites.dungeon.chestClosed,sprites.castle.rock0,sprites.castle.rock1,sprites.vehicle.roadHorizontal,sprites.dungeon.hazardWater,sprites.castle.shrub,sprites.castle.tileGrass1,sprites.builtin.forestTiles21,sprites.builtin.forestTiles23,sprites.builtin.forestTiles22,sprites.builtin.forestTiles4,sprites.builtin.forestTiles1,sprites.builtin.forestTiles3,sprites.builtin.forestTiles2,sprites.castle.saplingPine,sprites.castle.tileDarkGrass3,sprites.builtin.forestTiles17,sprites.castle.tilePath5],
+            [myTiles.tile0,sprites.castle.tileGrass3,sprites.builtin.forestTiles0,sprites.dungeon.chestClosed,sprites.castle.rock0,sprites.castle.rock1,sprites.vehicle.roadHorizontal,sprites.dungeon.hazardWater,sprites.castle.shrub,sprites.castle.tileGrass1,sprites.builtin.forestTiles21,sprites.builtin.forestTiles23,sprites.builtin.forestTiles22,sprites.builtin.forestTiles4,sprites.builtin.forestTiles1,sprites.builtin.forestTiles3,sprites.builtin.forestTiles2,sprites.castle.saplingPine,sprites.castle.tileDarkGrass3,sprites.builtin.forestTiles17,sprites.castle.tilePath5,sprites.castle.tileGrass2],
             TileScale.Sixteen
         ))
-SetAnimations()
+playerSprite = sprites.create(img`
+. . . . . . f f f f . . . . . . 
+. . . . f f f 2 2 f f f . . . . 
+. . . f f f 2 2 2 2 f f f . . . 
+. . f f f e e e e e e f f f . . 
+. . f f e 2 2 2 2 2 2 e e f . . 
+. . f e 2 f f f f f f 2 e f . . 
+. . f f f f e e e e f f f f . . 
+. f f e f b f 4 4 f b f e f f . 
+. f e e 4 1 f d d f 1 4 e e f . 
+. . f f f f d d d d d e e f . . 
+. f d d d d f 4 4 4 e e f . . . 
+. f b b b b f 2 2 2 2 f 4 e . . 
+. f b b b b f 2 2 2 2 f d 4 . . 
+. . f c c f 4 5 5 4 4 f 4 4 . . 
+. . . f f f f f f f f . . . . . 
+. . . . . f f . . f f . . . . . 
+`, SpriteKind.Player)
 controller.moveSprite(playerSprite)
+SetPlayerAnimations()
+SetSnakeAnimations()
 tiles.placeOnRandomTile(playerSprite, sprites.castle.tileGrass1)
 let houseSprite = sprites.create(img`
 . . . . . . . . . . . . . . . . . . . . e 2 e 2 2 e 2 e . . . . . . . . . . . . . . . . . . . . 
