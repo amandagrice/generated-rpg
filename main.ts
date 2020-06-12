@@ -12,6 +12,7 @@ enum ActionKind {
 }
 namespace SpriteKind {
     export const Tree = SpriteKind.create()
+    export const Sword = SpriteKind.create()
 }
 namespace myTiles {
     //% blockIdentity=images._tile
@@ -416,6 +417,41 @@ f 7 6 f 6 6 f 6 7 7 7 f 6 6 6 c
 `)
     animation.attachAnimation(snakeSprite, snakeAttack)
 }
+sprites.onOverlap(SpriteKind.Sword, SpriteKind.Enemy, function (sprite, otherSprite) {
+    if (isSwordVisible > 0) {
+        otherSprite.destroy(effects.fire, 200)
+    }
+})
+controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+    isSwordVisible = 1
+    sword.setFlag(SpriteFlag.Invisible, false)
+    pause(100)
+    sword.setFlag(SpriteFlag.Invisible, true)
+    isSwordVisible = 0
+})
+sprites.onOverlap(SpriteKind.Player, SpriteKind.Enemy, function (sprite, otherSprite) {
+    animation.setAction(otherSprite, ActionKind.snakeAttack)
+    info.changeLifeBy(-1)
+    pause(2000)
+})
+function CalculateSwordPlacement () {
+    if (playerSprite.vx < 0) {
+        sword.right = playerSprite.left
+        sword.y = playerSprite.y
+    } else if (playerSprite.vx > 0) {
+        sword.left = playerSprite.right
+        sword.y = playerSprite.y
+    } else if (playerSprite.vy > 0) {
+        sword.top = playerSprite.bottom
+        sword.x = playerSprite.x
+    } else if (playerSprite.vy < 0) {
+        sword.bottom = playerSprite.top
+        sword.x = playerSprite.x
+    } else {
+        sword.top = playerSprite.bottom
+        sword.x = playerSprite.x
+    }
+}
 function TriggerPlayerAnimations () {
     if (playerSprite.vx > 0) {
         animation.setAction(playerSprite, ActionKind.WalkRight)
@@ -438,7 +474,11 @@ let animWalkBackward: animation.Animation = null
 let animWalkForward: animation.Animation = null
 let animIdle: animation.Animation = null
 let treeSprite: Sprite = null
+let sword: Sprite = null
 let playerSprite: Sprite = null
+let isSwordVisible = 0
+isSwordVisible = 0
+info.setLife(5)
 tiles.setTilemap(tiles.createTilemap(
             hex`100010000e10101010101010101010101010100f0d09090909090909090909090909090d0d09090909090901090909090909090d0d09010909090909090909090909090d0d09090909090909090909090909090d0d09090909090909090909010909090d0d09090909090909090909090909090d0d09090909090909090909090909090d0d09090909090909090909090909090d0d09090909090109090909090901090d0d09090909090909151515090909090d0d09090909090909091515090909090d0d09090109090909091501090909090d0d09090909090909090915090909090d0d09090909090909090909090909090d0a0c0c0c0c0c0c0c0c0c0c0c0c0c0c0b`,
             img`
@@ -480,6 +520,25 @@ playerSprite = sprites.create(img`
 . . . f f f f f f f f . . . . . 
 . . . . . f f . . f f . . . . . 
 `, SpriteKind.Player)
+sword = sprites.create(img`
+. . . . . . . . . . . . . . . . 
+. . . . . . 4 4 4 4 . . . . . . 
+. . . . 4 4 4 5 5 4 4 4 . . . . 
+. . . 3 3 3 3 4 4 4 4 4 4 . . . 
+. . 4 3 3 3 3 2 2 2 1 1 4 4 . . 
+. . 3 3 3 3 3 2 2 2 1 1 5 4 . . 
+. 4 3 3 3 3 2 2 2 2 2 5 5 4 4 . 
+. 4 3 3 3 2 2 2 4 4 4 4 5 4 4 . 
+. 4 4 3 3 2 2 4 4 4 4 4 4 4 4 . 
+. 4 2 3 3 2 2 4 4 4 4 4 4 4 4 . 
+. . 4 2 3 3 2 4 4 4 4 4 2 4 . . 
+. . 4 2 2 3 2 2 4 4 4 2 4 4 . . 
+. . . 4 2 2 2 2 2 2 2 2 4 . . . 
+. . . . 4 4 2 2 2 2 4 4 . . . . 
+. . . . . . 4 4 4 4 . . . . . . 
+. . . . . . . . . . . . . . . . 
+`, SpriteKind.Sword)
+sword.setFlag(SpriteFlag.Invisible, true)
 controller.moveSprite(playerSprite)
 SetPlayerAnimations()
 SetSnakeAnimations()
@@ -565,5 +624,6 @@ c c 7 7 7 7 7 7 7 7 7 7 7 7 6 c
     tiles.placeOnTile(treeSprite, value)
 }
 game.onUpdate(function () {
+    CalculateSwordPlacement()
     TriggerPlayerAnimations()
 })
